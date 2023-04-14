@@ -10,6 +10,16 @@ Before uploading this here publicly I did a couple small tweaks to make it more 
 
 * No Sound: Ironically this Plug-In does not produce audio.
 
+**Usage:**
+
+* When opening the plugin you will be prompted to select a WAD file.
+
+**Controls:**
+Arrow Keys: Movement
+Ctrl or Z: Fire
+Shift or A: Run
+Enter: Select
+
 **Disclaimer:**
 
 This Plug-In will probably crash. Please do not use this in a project file that matters to you. 
