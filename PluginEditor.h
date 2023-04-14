@@ -6,7 +6,8 @@
 //==============================================================================
 class DoomWindow : public juce::AudioProcessorEditor,
                    public juce::KeyListener,
-                   public juce::ComponentBoundsConstrainer {
+                   public juce::ComponentBoundsConstrainer,
+                   public juce::AsyncUpdater{
 public:
     explicit DoomWindow(AudioPluginAudioProcessor&);
     ~DoomWindow() override;
@@ -18,10 +19,10 @@ public:
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
     bool keyStateChanged(bool isKeyDown, Component* originatingComponent) override;
     void modifierKeysChanged(const juce::ModifierKeys& modifiers) override;
-
+    void handleAsyncUpdate() override;
 private:
-    bool keyboard_state[256];
-    void key_state_handler(const int);
+    bool keyboard_state[512];
+    void key_state_handler(int);
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
