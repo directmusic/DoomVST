@@ -149,7 +149,9 @@ static void addKeyToQueue(int pressed, int keyCode) {
 
 std::queue<unsigned int> key_queue;
 
-bool DoomWindow::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) { }
+bool DoomWindow::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) {
+    return true;
+}
 
 void DoomWindow::modifierKeysChanged(const juce::ModifierKeys& modifiers) {
     {
@@ -187,6 +189,7 @@ bool DoomWindow::keyStateChanged(bool isKeyDown, juce::Component* originatingCom
     for (int i = 65; i < 123; i++) {
         key_state_handler(i);
     }
+    return true;
 }
 
 int DG_GetKey(int* pressed, unsigned char* doomKey) {
