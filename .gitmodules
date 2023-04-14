@@ -1,0 +1,6 @@
+[submodule "JUCE"]
+	path = JUCE
+	url = https://github.com/juce-framework/JUCE
+[submodule "doomgeneric"]
+	path = doomgeneric
+	url = https://github.com/ozkl/doomgeneric
