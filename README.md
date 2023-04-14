@@ -9,7 +9,6 @@ Before uploading this here publicly I did a couple small tweaks to make it more 
 **Known Issues:**
 
 * No Sound: Ironically this Plug-In does not produce audio.
-* Audio Unit does not have keyboard control.
 
 **Disclaimer:**
 
