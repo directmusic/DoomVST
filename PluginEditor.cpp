@@ -37,6 +37,18 @@ static bool validate_IWAD(const std::string& path) {
     }
 }
 
+static std::atomic<bool> ready_to_quit = false;
+static std::atomic<bool> finished_draw_loop = false;
+
+static void run_doom_generic(int argc, char **argv) {
+    doomgeneric_Create(argc, argv);
+
+    while (!ready_to_quit) {
+        doomgeneric_Tick();
+    }
+    finished_draw_loop = true;
+}
+
 void DoomWindow::wad_file_found(const std::string& path) {
     if (!validate_IWAD(path)) {
         m_valid_file_selected = false;
@@ -46,7 +58,7 @@ void DoomWindow::wad_file_found(const std::string& path) {
     m_file_path = path;
     m_valid_file_selected = true;
     m_args = { (char*)m_who_cares.c_str(), (char*)m_iwad_flag.c_str(), (char*)m_file_path.c_str() };
-    m_doom_thread = std::make_unique<std::thread>(doomgeneric_Create, m_args.size(), m_args.data());
+    m_doom_thread = std::make_unique<std::thread>(run_doom_generic, m_args.size(), m_args.data());
     m_doom_thread->detach();
 }
 
