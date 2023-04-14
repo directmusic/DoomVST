@@ -15,10 +15,10 @@ Before uploading this here publicly I did a couple small tweaks to make it more 
 * When opening the plugin you will be prompted to select a WAD file.
 
 **Controls:**
-Arrow Keys: Movement
-Ctrl or Z: Fire
-Shift or A: Run
-Enter: Select
+* Arrow Keys: Movement
+* Ctrl or Z: Fire
+* Shift or A: Run
+* Enter: Select
 
 **Disclaimer:**
 
