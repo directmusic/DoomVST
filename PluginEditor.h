@@ -20,7 +20,7 @@ public:
     void modifierKeysChanged(const juce::ModifierKeys& modifiers) override;
 
 private:
-    bool keyboard_state[INT_MAX];
+    bool keyboard_state[256];
     void key_state_handler(const int);
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.

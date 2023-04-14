@@ -68,7 +68,7 @@ DoomWindow::DoomWindow(AudioPluginAudioProcessor& p)
 
     m_framebuffer = juce::Image(juce::Image::PixelFormat::ARGB, DOOMGENERIC_RESX, DOOMGENERIC_RESY, true);
 
-    for (int i = 0; i < INT_MAX; i++) {
+    for (int i = 0; i < 256; i++) {
         keyboard_state[i] = false;
     }
 
@@ -110,8 +110,8 @@ uint32_t DG_GetTicksMs() {
 static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
 static unsigned int s_KeyQueueWriteIndex = 0;
 static unsigned int s_KeyQueueReadIndex = 0;
-#define KCTRL 42069
-#define KSHIFT 69420
+#define KCTRL 65536
+#define KSHIFT 65537
 
 static unsigned char convertToDoomKey(unsigned int key) {
     if (key == juce::KeyPress::leftKey)
@@ -150,7 +150,7 @@ static void addKeyToQueue(int pressed, int keyCode) {
 std::queue<unsigned int> key_queue;
 
 bool DoomWindow::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) {
-    return true;
+    return false;
 }
 
 void DoomWindow::modifierKeysChanged(const juce::ModifierKeys& modifiers) {
@@ -171,25 +171,27 @@ void DoomWindow::modifierKeysChanged(const juce::ModifierKeys& modifiers) {
 }
 
 void DoomWindow::key_state_handler(const int key_code) {
+    //jassert(key_code < 255);
     bool state = juce::KeyPress::isKeyCurrentlyDown(key_code);
     if (state != keyboard_state[key_code]) {
         addKeyToQueue(state, key_code);
+        DBG(key_code);
     }
     keyboard_state[key_code] = state;
 }
 
 bool DoomWindow::keyStateChanged(bool isKeyDown, juce::Component* originatingComponent) {
-    key_state_handler(juce::KeyPress::leftKey);
-    key_state_handler(juce::KeyPress::rightKey);
-    key_state_handler(juce::KeyPress::upKey);
-    key_state_handler(juce::KeyPress::downKey);
+    key_state_handler(juce::KeyPress::leftKey - 65535);
+    key_state_handler(juce::KeyPress::rightKey - 65535);
+    key_state_handler(juce::KeyPress::upKey - 65535);
+    key_state_handler(juce::KeyPress::downKey - 65535);
     key_state_handler(juce::KeyPress::returnKey);
     key_state_handler(juce::KeyPress::spaceKey);
     key_state_handler(juce::KeyPress::escapeKey);
     for (int i = 65; i < 123; i++) {
         key_state_handler(i);
     }
-    return true;
+    return false;
 }
 
 int DG_GetKey(int* pressed, unsigned char* doomKey) {
