@@ -82,6 +82,7 @@ DoomWindow::DoomWindow(AudioPluginAudioProcessor& p)
 
     for (int i = 0; i < 512; i++) {
         keyboard_state[i] = false;
+        midi_state[i] = false;
     }
 
     m_file_chooser = std::make_unique<juce::FileChooser>("Choose WAD File");
@@ -106,13 +107,16 @@ DoomWindow::~DoomWindow() {
 }
 
 void DoomWindow::handleAsyncUpdate() {
+    // Check for midi inputs
+    check_midi_input();
+
     if (editor_ptr)
         editor_ptr->repaint();
 }
 
 void DG_Init() { }
 void DG_DrawFrame() {
-    // Draws the frame using juce::AsyncUpdater
+        // Draws the frame using juce::AsyncUpdater
     if (editor_ptr)
         editor_ptr->triggerAsyncUpdate();
 }
@@ -159,12 +163,15 @@ static unsigned char convertToDoomKey(int key) {
         key = KEY_RSHIFT;
     else if (key == KCTRL || key == 'z' || key == 'Z')
         key = KEY_FIRE;
+    else if (key == KEY_LALT || key == 'x' || key == 'X')
+        key = KEY_LALT;
 
     key = tolower(key);
     return key;
 }
 
 static void addKeyToQueue(int pressed, int keyCode) {
+    DBG("pressed: " << pressed << ", keyCode: " << keyCode);
     unsigned char key = convertToDoomKey(keyCode);
 
     unsigned short keyData = (pressed << 8) | key;
@@ -210,6 +217,43 @@ void DoomWindow::key_state_handler(int key_code) {
         addKeyToQueue(state, key_code);
     }
     keyboard_state[key_code] = state;
+}
+
+void DoomWindow::midi_state_handler(int key_code, bool state) {
+    if (key_code > 256) {
+        key_code -= 62972;
+    }
+
+    if (state != midi_state[key_code]) {
+        addKeyToQueue(state, key_code);
+    }
+    midi_state[key_code] = state;
+}
+
+void DoomWindow::check_midi_input() {
+    using Keys = AudioPluginAudioProcessor::Keys;
+
+    static std::map<Keys, int> midi_to_key{ 
+        {Keys::leftKey,   juce::KeyPress::leftKey},
+        {Keys::rightKey,  juce::KeyPress::rightKey},
+        {Keys::upKey,     juce::KeyPress::upKey},
+        {Keys::downKey,   juce::KeyPress::downKey},
+        {Keys::strafeKey, 'x'},
+        {Keys::shootKey,  'z'},
+        {Keys::returnKey, juce::KeyPress::returnKey},
+        {Keys::spaceKey,  juce::KeyPress::spaceKey},
+        {Keys::shiftKey,  'a'},
+        {Keys::escapeKey, juce::KeyPress::escapeKey}
+    };
+
+    auto& key_atomics = processorRef.m_key_atomics;
+
+    for (int i = 0; i < key_atomics.size(); i++) {
+        const bool state = key_atomics[i].load(std::memory_order_relaxed);
+
+        jassert(midi_to_key.count((Keys)i)); // Key is not in 'midi_to_key' map
+        midi_state_handler(midi_to_key[(Keys)i], state);
+    }
 }
 
 bool DoomWindow::keyStateChanged(bool isKeyDown, juce::Component* originatingComponent) {
