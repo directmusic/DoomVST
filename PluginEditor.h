@@ -22,7 +22,12 @@ public:
     void handleAsyncUpdate() override;
 private:
     bool keyboard_state[512];
+    bool midi_state[512];
     void key_state_handler(int);
+    void midi_state_handler(int, bool);
+
+    void check_midi_input();
+
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;

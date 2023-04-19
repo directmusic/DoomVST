@@ -13,6 +13,8 @@ extern "C" {
 #include <fstream>
 #include <thread>
 
+constexpr int key_offset = 62972;
+
 DoomWindow* editor_ptr = nullptr;
 
 static bool validate_IWAD(const std::string& path) {
@@ -82,6 +84,7 @@ DoomWindow::DoomWindow(AudioPluginAudioProcessor& p)
 
     for (int i = 0; i < 512; i++) {
         keyboard_state[i] = false;
+        midi_state[i] = false;
     }
 
     m_file_chooser = std::make_unique<juce::FileChooser>("Choose WAD File");
@@ -106,6 +109,9 @@ DoomWindow::~DoomWindow() {
 }
 
 void DoomWindow::handleAsyncUpdate() {
+    // Check for midi inputs
+    check_midi_input();
+
     if (editor_ptr)
         editor_ptr->repaint();
 }
@@ -137,15 +143,15 @@ static unsigned int s_KeyQueueReadIndex = 0;
 #define KSHIFT 1
 
 static unsigned char convertToDoomKey(int key) {
-    DBG(key);
+    DBG("Key pressed: " << key);
     // Explanation for the subtraction is in key_state_handler()
-    if (key == juce::KeyPress::leftKey - 62972)
+    if (key == juce::KeyPress::leftKey - key_offset)
         key = KEY_LEFTARROW;
-    else if (key == juce::KeyPress::rightKey - 62972)
+    else if (key == juce::KeyPress::rightKey - key_offset)
         key = KEY_RIGHTARROW;
-    else if (key == juce::KeyPress::downKey - 62972)
+    else if (key == juce::KeyPress::downKey - key_offset)
         key = KEY_DOWNARROW;
-    else if (key == juce::KeyPress::upKey - 62972)
+    else if (key == juce::KeyPress::upKey - key_offset)
         key = KEY_UPARROW;
     else if (key == juce::KeyPress::returnKey)
         key = KEY_ENTER;
@@ -159,6 +165,8 @@ static unsigned char convertToDoomKey(int key) {
         key = KEY_RSHIFT;
     else if (key == KCTRL || key == 'z' || key == 'Z')
         key = KEY_FIRE;
+    else if (key == KEY_LALT || key == 'x' || key == 'X')
+        key = KEY_LALT;
 
     key = tolower(key);
     return key;
@@ -166,7 +174,6 @@ static unsigned char convertToDoomKey(int key) {
 
 static void addKeyToQueue(int pressed, int keyCode) {
     unsigned char key = convertToDoomKey(keyCode);
-
     unsigned short keyData = (pressed << 8) | key;
 
     s_KeyQueue[s_KeyQueueWriteIndex] = keyData;
@@ -201,15 +208,51 @@ void DoomWindow::key_state_handler(int key_code) {
     // Subtracting 62972 is basically moving the value back into a reasonable range
     // for an array that stores the keyboard state. JUCE uses values like 63234 to store
     // the arrow keys.
-
     if (key_code > 256) {
-        key_code -= 62972;
+        key_code -= key_offset;
     }
 
     if (state != keyboard_state[key_code]) {
         addKeyToQueue(state, key_code);
     }
     keyboard_state[key_code] = state;
+}
+
+void DoomWindow::midi_state_handler(int key_code, bool state) {
+    if (key_code > 256) {
+        key_code -= key_offset;
+    }
+
+    if (state != midi_state[key_code]) {
+        addKeyToQueue(state, key_code);
+    }
+    midi_state[key_code] = state;
+}
+
+void DoomWindow::check_midi_input() {
+    using Keys = AudioPluginAudioProcessor::Keys;
+
+    static std::map<Keys, int> midi_to_key{ 
+        {Keys::leftKey,   juce::KeyPress::leftKey},
+        {Keys::rightKey,  juce::KeyPress::rightKey},
+        {Keys::upKey,     juce::KeyPress::upKey},
+        {Keys::downKey,   juce::KeyPress::downKey},
+        {Keys::strafeKey, 'x'},
+        {Keys::shootKey,  'z'},
+        {Keys::returnKey, juce::KeyPress::returnKey},
+        {Keys::spaceKey,  juce::KeyPress::spaceKey},
+        {Keys::shiftKey,  'a'},
+        {Keys::escapeKey, juce::KeyPress::escapeKey}
+    };
+
+    auto& key_atomics = processorRef.m_key_atomics;
+
+    for (int i = 0; i < key_atomics.size(); i++) {
+        const bool state = key_atomics[i].load(std::memory_order_relaxed);
+
+        jassert(midi_to_key.count((Keys)i)); // Key is not in 'midi_to_key' map
+        midi_state_handler(midi_to_key[(Keys)i], state);
+    }
 }
 
 bool DoomWindow::keyStateChanged(bool isKeyDown, juce::Component* originatingComponent) {
@@ -263,9 +306,9 @@ void DoomWindow::paint(juce::Graphics& g) {
             for (int j = 0; j < DOOMGENERIC_RESY; j++) {
                 auto temp = DG_ScreenBuffer[j * DOOMGENERIC_RESX + i];
 
-                auto red = static_cast<uint8_t>((temp >> 16) & 0xff);
+                auto red   = static_cast<uint8_t>((temp >> 16) & 0xff);
                 auto green = static_cast<uint8_t>((temp >> 8) & 0xff);
-                auto blue = static_cast<uint8_t>(temp & 0xff);
+                auto blue  = static_cast<uint8_t>(temp & 0xff);
 
                 bitmap.setPixelColour(i, j, juce::Colour(red, green, blue, (uint8_t)255));
             }
@@ -274,7 +317,8 @@ void DoomWindow::paint(juce::Graphics& g) {
         g.drawImageWithin(m_framebuffer, 0, 0, getWidth(), getHeight(), juce::RectanglePlacement::stretchToFit);
     } else {
         g.setColour(juce::Colours::white);
-        g.drawText("You did not select a valid WAD file. Please close the Plug-In and select a valid WAD file.", juce::Rectangle<int> { 0, 0, getWidth(), getHeight() }, juce::Justification::centred);
+        g.drawText("You did not select a valid WAD file. Please close the Plug-In and select a valid WAD file.", 
+            juce::Rectangle<int> { 0, 0, getWidth(), getHeight() }, juce::Justification::centred);
     }
 }
 
