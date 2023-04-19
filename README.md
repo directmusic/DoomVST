@@ -1,6 +1,6 @@
 # DoomVST
 
-I made this very naive [doomgeneric]("https://github.com/ozkl/doomgeneric") port for a tweet as seen here:
+I made this very naive [doomgeneric](https://github.com/ozkl/doomgeneric) port for a tweet as seen here:
 
 ![Screenshot of a tweet showing doom running in Ableton Live 11](https://github.com/directmusic/DoomVST/blob/main/tweet.png)
 
