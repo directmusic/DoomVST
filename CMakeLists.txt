@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 add_subdirectory(JUCE)
-project(JUCEDoom VERSION 0.0.1)
+project(JUCEDoom VERSION 0.1.0)
 
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 
