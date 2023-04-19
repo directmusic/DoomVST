@@ -15,10 +15,18 @@ Before uploading this here publicly I did a couple small tweaks to make it more 
 * When opening the plugin you will be prompted to select a WAD file.
 
 **Controls:**
+
+Keyboard
 * Arrow Keys: Movement
 * Ctrl or Z: Fire
 * Shift or A: Run
 * Enter: Select
+
+MIDI:
+* Notes C4-A4
+
+**Notable Contributions:**
+* [Speechrezz](https://github.com/Speechrezz) - Added MIDI Input support
 
 **Disclaimer:**
 
